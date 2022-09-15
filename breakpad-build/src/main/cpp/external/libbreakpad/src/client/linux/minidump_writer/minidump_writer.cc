@@ -161,7 +161,7 @@ namespace {
         bool Init() {
           if (!dumper_->Init())
             return false;
-
+          // 暂停所有线程
           if (!dumper_->ThreadsSuspend() || !dumper_->LateInit())
             return false;
 
@@ -253,8 +253,6 @@ namespace {
             return false;
           dir.CopyIndex(dir_index++, &dirent);
 
-          char *s = "i want to writer!!";
-
           if (!WriteMappings(&dirent))
             return false;
           dir.CopyIndex(dir_index++, &dirent);
@@ -325,11 +323,10 @@ namespace {
           // above.
 //    MD_BREAKPAD_INFO_STREAM        = 0x47670001,  /* MDRawBreakpadInfo  */
 
-          dirent.stream_type = MD_BREAKPAD_INFO_STREAM;
-          if (!WriteExtraInfo(&dirent.location, GetCrashThread()))
-            NullifyDirectoryEntry(&dirent);
-          dir.CopyIndex(dir_index++, &dirent);
-
+//          dirent.stream_type = MD_BREAKPAD_INFO_STREAM;
+//          if (!WriteExtraInfo(&dirent.location, GetCrashThread()))
+//            NullifyDirectoryEntry(&dirent);
+//          dir.CopyIndex(dir_index++, &dirent);
           dumper_->ThreadsResume();
           return true;
         }
@@ -1420,12 +1417,15 @@ namespace {
         dumper.set_crash_thread(context->tid);
       }
 
-      ALOGD("child p， WriteMinidumpImpl： 得到 writer 对象。");
+
       MinidumpWriter writer(minidump_path, minidump_fd, context, mappings,
                             appmem, skip_stacks_if_mapping_unreferenced,
                             principal_mapping_address, sanitize_stacks, &dumper);
       // Set desired limit for file size of minidump (-1 means no limit).
       writer.set_minidump_size_limit(minidump_size_limit);
+      ALOGD("child p， WriteMinidumpImpl： 得到 writer 对象。minidump_size_limit:%ld",
+            minidump_size_limit);
+      // 这里是开始暂停所有线程
       if (!writer.Init())
         return false;
 

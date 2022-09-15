@@ -546,33 +546,40 @@ namespace google_breakpad {
       const pid_t child = sys_clone(
               ThreadEntry, stack, CLONE_FS | CLONE_UNTRACED, &thread_arg, NULL, NULL,
               NULL);
-      if (child == -1) {
+        if (child == -1) {
+            sys_close(fdes[0]);
+            sys_close(fdes[1]);
+            return false;
+        }
+
+        // Close the read end of the pipe.
         sys_close(fdes[0]);
+        // Allow the child to ptrace us
+
+        ALOGD("允许子进程ptrace我们， 发送信号告知子进程已经ptrace !");
+        sys_prctl(PR_SET_PTRACER, child, 0, 0, 0);
+        SendContinueSignalToChild();
+        int status = 0;
+
+        ALOGD("等待子进程工作完成...");
+        const int r = HANDLE_EINTR(sys_waitpid(child, &status, __WALL));
+
         sys_close(fdes[1]);
-        return false;
-      }
 
-      // Close the read end of the pipe.
-      sys_close(fdes[0]);
-      // Allow the child to ptrace us
-      sys_prctl(PR_SET_PTRACER, child, 0, 0, 0);
-      SendContinueSignalToChild();
-      int status = 0;
-      const int r = HANDLE_EINTR(sys_waitpid(child, &status, __WALL));
+        if (r == -1) {
+            static const char msg[] = "ExceptionHandler::GenerateDump waitpid failed:";
+            logger::write(msg, sizeof(msg) - 1);
+            logger::write(strerror(errno), strlen(strerror(errno)));
+            logger::write("\n", 1);
+        }
 
-      sys_close(fdes[1]);
-
-      if (r == -1) {
-        static const char msg[] = "ExceptionHandler::GenerateDump waitpid failed:";
+        bool success = r != -1 && WIFEXITED(status) && WEXITSTATUS(status) == 0;
+        ALOGD("子进程工作完成，主进程开始执行callback ...，准备测试一行字");
+        static const char msg[] = "ExceptionHandler::GenerateDump waitpid failed: yes testyes testyes test";
         logger::write(msg, sizeof(msg) - 1);
-        logger::write(strerror(errno), strlen(strerror(errno)));
-        logger::write("\n", 1);
-      }
-
-      bool success = r != -1 && WIFEXITED(status) && WEXITSTATUS(status) == 0;
-      if (callback_)
-        success = callback_(minidump_descriptor_, callback_context_, success);
-      return success;
+        if (callback_)
+            success = callback_(minidump_descriptor_, callback_context_, success);
+        return success;
     }
 
 // This function runs in a compromised context: see the top of the file.

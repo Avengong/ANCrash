@@ -65,6 +65,7 @@
 static bool SuspendThread(pid_t pid) {
     // This may fail if the thread has just died or debugged.
     errno = 0;
+    // 通过ptrace的attach，来暂停，dettach来恢复
     if (sys_ptrace(PTRACE_ATTACH, pid, NULL, NULL) != 0 &&
         errno != 0) {
         return false;
@@ -314,6 +315,7 @@ namespace google_breakpad {
     bool LinuxPtraceDumper::ThreadsSuspend() {
         if (threads_suspended_)
             return true;
+        // 遍历线程，开始暂停
         for (size_t i = 0; i < threads_.size(); ++i) {
             if (!SuspendThread(threads_[i])) {
                 // If the thread either disappeared before we could attach to it, or if
