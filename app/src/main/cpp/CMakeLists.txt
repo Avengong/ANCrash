@@ -8,7 +8,7 @@ cmake_minimum_required(VERSION 3.18.1)
 # Declares and names the project.
 
 project("ancrash")
-
+set(TARGET ancrash)
 # Creates and names a library, sets it as either STATIC
 # or SHARED, and provides the relative paths to its source code.
 # You can define multiple libraries, and CMake builds them for you.
@@ -20,8 +20,18 @@ add_library( # Sets the name of the library.
         # Sets the library as a shared library.
         SHARED
 
+
+        coffe/coffeecatch.c
+        coffe/coffeejni.c
         # Provides a relative path to your source file(s).
         native-lib.cpp)
+
+
+# 添加包含目录头文件
+target_include_directories(ancrash PUBLIC
+        coffe
+        include
+        )
 
 # Searches for a specified prebuilt library and stores the path as a
 # variable. Because CMake includes system libraries in the search path by
@@ -43,7 +53,6 @@ find_library( # Sets the name of the path variable.
 # 静态链接库，也就是说当前项目需要使用到的库！第三方或者系统的
 target_link_libraries( # Specifies the target library.
         ancrash
-
         # Links the target library to the log library
         # included in the NDK.
         ${log-lib})
