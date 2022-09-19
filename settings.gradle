@@ -16,3 +16,4 @@ rootProject.name = "ANCrash"
 include ':app'
 include ':glide'
 include ':breakpad-build'
+include ':an-crash'

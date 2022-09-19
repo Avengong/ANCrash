@@ -16,6 +16,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         initBreakPad()
+        initAnCatcher()
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
@@ -36,6 +37,11 @@ class MainActivity : AppCompatActivity() {
 
     }
 
+    private fun initAnCatcher() {
+
+        AnCatcher.initAnCatch(applicationContext)
+    }
+
     /**
      * A native method that is implemented by the 'ancrash' native library,
      * which is packaged with this application.
@@ -46,7 +52,7 @@ class MainActivity : AppCompatActivity() {
         // Used to load the 'ancrash' library on application startup.
         init {
             System.loadLibrary("ancrash")
-
+            System.loadLibrary("ancatch")
         }
     }
 
